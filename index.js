@@ -1,32 +1,62 @@
-// index.js
-// where your node app starts
+// Import Express
+const express = require('express');
+const app = express();
 
-// init project
-var express = require('express');
-var app = express();
+// Import CORS
+const cors = require('cors');
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
+// Enable CORS
+app.use(cors({ optionsSuccessStatus: 200 }));
 
-// http://expressjs.com/en/starter/static-files.html
+// Serve static files from public folder
 app.use(express.static('public'));
 
-// http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function (req, res) {
+// Homepage route
+app.get('/', function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
-
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+// Hello API endpoint
+app.get('/api/hello', function (req, res) {
+  res.json({ greeting: 'hello API' });
 });
 
+// Timestamp Microservice API
+app.get('/api/:date?', function (req, res) {
 
+  let date;
 
-// Listen on port set in environment variable or default to 3000
-var listener = app.listen(process.env.PORT || 3000, function () {
+  // If date parameter is empty, return current date
+  if (!req.params.date) {
+    date = new Date();
+  } else {
+    const inputDate = req.params.date;
+
+    // Check whether input is a Unix timestamp
+    if (/^-?\d+$/.test(inputDate)) {
+      date = new Date(Number(inputDate));
+    } else {
+      // Parse the input as a date string
+      date = new Date(inputDate);
+    }
+  }
+
+  // Validate the date
+  if (isNaN(date.getTime())) {
+    return res.json({
+      error: 'Invalid Date'
+    });
+  }
+
+  // Return Unix timestamp and UTC date
+  return res.json({
+    unix: date.getTime(),
+    utc: date.toUTCString()
+  });
+
+});
+
+// Start the server
+const listener = app.listen(process.env.PORT || 3000, function () {
   console.log('Your app is listening on port ' + listener.address().port);
 });
